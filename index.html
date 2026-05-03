@@ -1,78 +1,103 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import useSWR from 'swr';
+import { TrendingUp, TrendingDown, RefreshCw, Newspaper } from 'lucide-react';
 
 const API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY;
-const SYMBOLS = ["AAPL", "TSLA", "NVDA", "MSFT", "AMZN"];
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-export default function Dashboard() {
-  const [stocks, setStocks] = useState<any[]>([]);
-  const [news, setNews] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+const SYMBOLS = ["QQQ", "SPY", "NVDA", "TSLA", "AAPL"];
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        // 1. 주식 시세 데이터 페칭
-        const stockPromises = SYMBOLS.map(async (symbol) => {
-          const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`);
-          const data = await res.json();
-          return { symbol, ...data };
-        });
+export default function LuxuryDashboard() {
+  // 5초마다 주식 데이터 자동 갱신
+  const { data: stocks, mutate } = useSWR(
+    `stock-data`,
+    () => Promise.all(SYMBOLS.map(async (s) => {
+      const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${s}&token=${API_KEY}`);
+      return { symbol: s, ...(await res.json()) };
+    })),
+    { refreshInterval: 5000 }
+  );
 
-        // 2. 뉴스 데이터 페칭
-        const newsRes = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${API_KEY}`);
-        const newsData = await newsRes.json();
-
-        setStocks(await Promise.all(stockPromises));
-        setNews(newsData.slice(0, 10)); // 최신 뉴스 10개만
-        setLoading(false);
-      } catch (error) {
-        console.error("데이터 로드 실패:", error);
-      }
-    }
-    fetchData();
-  }, []);
-
-  if (loading) return <div className="p-10 text-center">데이터 로딩 중...</div>;
+  // 뉴스 데이터 (1분마다 갱신)
+  const { data: news } = useSWR(
+    `https://finnhub.io/api/v1/news?category=general&token=${API_KEY}`,
+    fetcher,
+    { refreshInterval: 60000 }
+  );
 
   return (
-    <div className="max-w-5xl mx-auto p-6 font-sans">
-      <h1 className="text-3xl font-bold mb-8">🇺🇸 실시간 미 증시 & 뉴스</h1>
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+      {/* Header */}
+      <header className="bg-white border-b sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+          <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
+            <span className="text-blue-600">PRO</span> MARKET WATCH
+          </h1>
+          <button onClick={() => mutate()} className="p-2 hover:bg-slate-100 rounded-full transition">
+            <RefreshCw size={20} className="text-slate-500" />
+          </button>
+        </div>
+      </header>
 
-      {/* 증시 시세 카드 영역 */}
-      <section className="mb-10">
-        <h2 className="text-xl font-semibold mb-4 text-gray-700">주요 종목 시세</h2>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          {stocks.map((s) => (
-            <div key={s.symbol} className="border p-4 rounded-xl shadow-sm bg-white">
-              <div className="text-sm font-bold text-blue-600">{s.symbol}</div>
-              <div className="text-2xl font-mono">${s.c}</div>
-              <div className={`text-sm ${s.d >= 0 ? 'text-red-500' : 'text-blue-500'}`}>
-                {s.d >= 0 ? '▲' : '▼'} {s.dp.toFixed(2)}%
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        {/* Market Overview */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
+          {stocks?.map((stock) => (
+            <div key={stock.symbol} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+              <div className="flex justify-between items-start mb-2">
+                <span className="font-bold text-slate-500">{stock.symbol}</span>
+                {stock.dp >= 0 ? 
+                  <TrendingUp size={18} className="text-emerald-500" /> : 
+                  <TrendingDown size={18} className="text-rose-500" />
+                }
+              </div>
+              <div className="text-2xl font-bold">${stock.c?.toFixed(2)}</div>
+              <div className={`text-sm font-medium mt-1 ${stock.dp >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                {stock.dp >= 0 ? '+' : ''}{stock.dp?.toFixed(2)}%
               </div>
             </div>
           ))}
         </div>
-      </section>
 
-      {/* 경제 뉴스 리스트 영역 */}
-      <section>
-        <h2 className="text-xl font-semibold mb-4 text-gray-700">최신 경제 뉴스</h2>
-        <div className="space-y-4">
-          {news.map((item) => (
-            <a key={item.id} href={item.url} target="_blank" className="block border-b pb-4 hover:bg-gray-50 transition">
-              <div className="flex gap-4">
-                {item.image && <img src={item.image} alt="news" className="w-24 h-16 object-cover rounded" />}
-                <div>
-                  <h3 className="font-medium text-lg leading-tight">{item.headline}</h3>
-                  <p className="text-sm text-gray-500 mt-1 line-clamp-2">{item.summary}</p>
-                </div>
+        {/* News Feed */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <Newspaper size={20} /> Latest Economy News
+            </h2>
+            <div className="space-y-4">
+              {news?.slice(0, 12).map((item: any) => (
+                <a key={item.id} href={item.url} target="_blank" className="group flex gap-4 bg-white p-4 rounded-2xl border border-transparent hover:border-blue-200 hover:shadow-md transition">
+                  {item.image && (
+                    <div className="w-32 h-20 flex-shrink-0 overflow-hidden rounded-lg bg-slate-200">
+                      <img src={item.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition" />
+                    </div>
+                  )}
+                  <div>
+                    <h3 className="font-bold text-slate-800 group-hover:text-blue-600 transition line-clamp-2">{item.headline}</h3>
+                    <p className="text-sm text-slate-500 mt-1 line-clamp-2">{item.summary}</p>
+                    <span className="text-[10px] text-slate-400 mt-2 block uppercase tracking-wider">{item.source}</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Sidebar / Watchlist Info */}
+          <div className="hidden lg:block">
+            <div className="bg-slate-900 text-white p-6 rounded-3xl sticky top-24">
+              <h3 className="font-bold text-lg mb-2">시장 알림</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                [확실] 현재 제공되는 데이터는 Finnhub 무료 API를 사용하며 약 15분의 지연이 발생할 수 있습니다. 
+              </p>
+              <div className="mt-6 pt-6 border-t border-slate-700 text-[11px] text-slate-500 uppercase tracking-widest">
+                Data updated every 5 seconds
               </div>
-            </a>
-          ))}
+            </div>
+          </div>
         </div>
-      </section>
+      </main>
     </div>
   );
 }
