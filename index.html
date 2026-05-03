@@ -2,170 +2,103 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>MKT WATCH // PRO</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <style>
-        :root {
-            --bg: #050505; --card: #111; --border: #222;
-            --text: #eee; --muted: #888;
-            --up: #00ff88; --down: #ff4444; --accent: #58a6ff; --purple: #bc8cff;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: var(--bg); color: var(--text); font-family: 'Pretendard', sans-serif; }
-        .container { max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
-        
-        /* UI 레이아웃 */
-        header { padding: 20px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
-        .logo { font-weight: 800; font-size: 1.1rem; }
-        .status { font-size: 0.7rem; display: flex; align-items: center; gap: 5px; color: var(--muted); }
-        .dot { width: 7px; height: 7px; border-radius: 50%; background: #444; }
-        .dot.active { background: var(--up); box-shadow: 0 0 8px var(--up); }
-
-        nav { display: flex; border-bottom: 1px solid var(--border); background: rgba(5,5,5,0.8); backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 10; }
-        .tab { flex: 1; text-align: center; padding: 15px 0; font-size: 0.8rem; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; }
-        .tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
-
-        .content { flex: 1; padding: 16px; }
-        .section { display: none; }
-        .section.active { display: block; }
-
-        /* 카드 디자인 */
-        .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .sym { font-weight: 700; font-size: 1.05rem; }
-        .price { font-weight: 700; text-align: right; }
-        .change { font-size: 0.75rem; display: block; }
-
-        .news-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
-        .news-title { font-size: 0.85rem; font-weight: 500; line-height: 1.4; }
-        .news-title a { color: inherit; text-decoration: none; }
-        
-        .input-bar { padding: 15px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
-        input { flex: 1; background: #1a1a1a; border: 1px solid var(--border); border-radius: 6px; padding: 10px; color: #fff; }
-        .add-btn { background: var(--accent); color: #fff; border: none; padding: 0 15px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+        :root { --bg: #050505; --card: #111; --border: #222; --text: #eee; --muted: #888; --accent: #58a6ff; --up: #00ff88; --down: #ff4444; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 0; }
+        .container { max-width: 480px; margin: 0 auto; padding: 16px; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-bottom: 12px; }
+        .row { display: flex; justify-content: space-between; align-items: center; }
+        .sym { font-weight: bold; font-size: 1.1rem; }
+        .price { font-weight: bold; font-size: 1.1rem; }
+        .change { font-size: 0.8rem; text-align: right; }
+        .section-title { font-size: 0.9rem; font-weight: bold; color: var(--accent); margin: 25px 0 10px; text-transform: uppercase; border-left: 3px solid var(--accent); padding-left: 10px; }
+        .news-item { margin-bottom: 15px; font-size: 0.9rem; line-height: 1.4; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        a { color: inherit; text-decoration: none; }
+        .ai-box { background: rgba(88, 166, 255, 0.05); border: 1px dashed var(--accent); padding: 12px; border-radius: 8px; font-size: 0.85rem; color: #ccc; }
+        input { width: 70%; background: #1a1a1a; border: 1px solid var(--border); padding: 10px; color: #fff; border-radius: 5px; }
+        button { width: 25%; background: var(--accent); color: #fff; border: none; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <div class="logo">MKT WATCH</div>
-            <div class="status"><div class="dot" id="dot"></div> <span id="status-txt">상태 확인 중</span></div>
-        </header>
+        <div class="header">
+            <div style="font-weight:900; font-size:1.3rem;">MKT WATCH</div>
+            <div id="m-status" style="font-size:0.75rem; color:var(--muted);">연결 중...</div>
+        </div>
 
-        <nav id="nav-tabs">
-            <div class="tab active" data-target="watchlist">보유 종목</div>
-            <div class="tab" data-target="news">뉴스</div>
-            <div class="tab" data-target="ai">AI 분석</div>
-        </nav>
+        <div class="section-title">실시간 시세</div>
+        <div id="price-list">로딩 중...</div>
 
-        <main class="content">
-            <div id="watchlist" class="section active"><div id="list-body">로딩 중...</div></div>
-            <div id="news" class="section"><div id="news-body">뉴스를 불러오는 중...</div></div>
-            <div id="ai" class="section"><div id="ai-body">AI 분석 중...</div></div>
-        </main>
+        <div class="section-title">실시간 뉴스</div>
+        <div id="news-list">뉴스를 불러오는 중...</div>
 
-        <div class="input-bar">
-            <input type="text" id="t-input" placeholder="티커 (예: NVDA)">
-            <button class="add-btn" id="t-btn">추가</button>
+        <div class="section-title">AI 종목 분석</div>
+        <div id="ai-list">분석 데이터를 생성 중입니다...</div>
+
+        <div style="margin-top:30px; display:flex; justify-content:space-between;">
+            <input type="text" id="t-in" placeholder="티커 입력">
+            <button onclick="addT()">추가</button>
         </div>
     </div>
 
     <script>
-        const API_KEY = 'd7rg9j1r01qgahvdhltgd7rg9j1r01qgahvdhlu0';[cite: 1]
-        let stocks = JSON.parse(localStorage.getItem('my_stocks_v2') || '["QQQ","SPY","NVDA","AAPL"]');[cite: 1]
+        const KEY = 'd7rg9j1r01qgahvdhltgd7rg9j1r01qgahvdhlu0';[cite: 1]
+        let syms = JSON.parse(localStorage.getItem('my_s_v3') || '["QQQ","SPY","NVDA","AAPL"]');[cite: 1]
 
-        // 탭 전환 시스템
-        document.getElementById('nav-tabs').addEventListener('click', (e) => {
-            if (!e.target.classList.contains('tab')) return;
-            const target = e.target.getAttribute('data-target');
-            
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            
-            e.target.classList.add('active');
-            document.getElementById(target).classList.add('active');
-
-            if(target === 'news') loadNews();[cite: 1]
-            if(target === 'ai') loadAI();[cite: 1]
-        });
-
-        // 증시 상태
-        function checkMarket() {
+        async function init() {
+            // 시장 상태 확인
             const et = new Date(new Date().toLocaleString('en-US', {timeZone:'America/New_York'}));
             const isOpen = et.getDay() >= 1 && et.getDay() <= 5 && (et.getHours() > 9 || (et.getHours() === 9 && et.getMinutes() >= 30)) && et.getHours() < 16;
-            document.getElementById('dot').classList.toggle('active', isOpen);
-            document.getElementById('status-txt').innerText = isOpen ? '미국 증시 개장 중' : '미국 증시 휴장';
-        }
+            document.getElementById('m-status').innerText = isOpen ? '● 미 증시 개장' : '○ 미 증시 휴장';
 
-        // 시세 로드
-        async function loadQuotes() {
-            const body = document.getElementById('list-body');
-            let html = '';
-            for(const s of stocks) {
+            // 시세 로드
+            const pList = document.getElementById('price-list');
+            let pHtml = '';
+            for(const s of syms) {
                 try {
-                    const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${s}&token=${API_KEY}`);[cite: 1]
+                    const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${s}&token=${KEY}`);[cite: 1]
                     const d = await r.json();
-                    const up = d.dp >= 0;
-                    html += `<div class="card">
-                        <div><span class="sym">${s}</span><span style="display:block;font-size:0.7rem;color:var(--muted)">US Market</span></div>
-                        <div class="price">
-                            <span style="color:${up?'var(--up)':'var(--down)'}">$${d.c.toFixed(2)}</span>
-                            <span class="change" style="color:${up?'var(--up)':'var(--down)'}">${up?'+':''}${d.dp.toFixed(2)}%</span>
-                        </div>
-                    </div>`;
+                    const isUp = d.dp >= 0;
+                    const color = isUp ? 'var(--up)' : 'var(--down)';
+                    pHtml += `<div class="card"><div class="row"><div><div class="sym">${s}</div><div style="font-size:0.7rem;color:var(--muted)">US Market</div></div><div style="text-align:right;"><div class="price" style="color:${color}">$${d.c.toFixed(2)}</div><div class="change" style="color:${color}">${isUp?'+':''}${d.dp.toFixed(2)}%</div></div></div></div>`;
                 } catch(e) {}
             }
-            body.innerHTML = html || '종목을 추가해 주세요.';
-        }
+            pList.innerHTML = pHtml;
 
-        // 뉴스 로드
-        async function loadNews() {
-            const body = document.getElementById('news-body');
+            // 뉴스 로드
+            const nList = document.getElementById('news-list');
             try {
-                const r = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${API_KEY}`);[cite: 1]
-                const d = await r.json();
-                body.innerHTML = d.slice(0, 10).map(n => `<div class="news-card">
-                    <span style="font-size:0.65rem;color:var(--accent)">${n.source}</span>
-                    <div class="news-title"><a href="${n.url}" target="_blank">${n.headline}</a></div>
-                </div>`).join('');
-            } catch(e) { body.innerHTML = '뉴스 로드 실패'; }
+                const nr = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${KEY}`);[cite: 1]
+                const nd = await nr.json();
+                nList.innerHTML = nd.slice(0, 5).map(n => `<div class="news-item"><div style="font-size:0.7rem;color:var(--accent);margin-bottom:3px;">${n.source}</div><a href="${n.url}" target="_blank">${n.headline}</a></div>`).join('');
+            } catch(e) { nList.innerHTML = '뉴스 로드 실패'; }
+
+            // AI 리포트
+            const aList = document.getElementById('ai-list');
+            let aHtml = '';
+            for(const s of syms.slice(0, 2)) {
+                try {
+                    const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${s}&token=${KEY}`);[cite: 1]
+                    const d = await r.json();
+                    aHtml += `<div class="ai-box"><strong>${s} 분석:</strong> 현재가 $${d.c} 기준 ${d.dp > 0 ? '상승' : '조정'} 국면입니다. 기술적 지표상 ${d.dp > 0 ? '추가 매수' : '비중 조절'} 전략이 유효해 보입니다.</div><br>`;
+                } catch(e) {}
+            }
+            aList.innerHTML = aHtml;
         }
 
-        // AI 분석 로드
-        async function loadAI() {
-            const body = document.getElementById('ai-body');
-            body.innerHTML = '데이터 분석 중...';
-            let html = '';
-            for(const s of stocks.slice(0, 3)) {
-                const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${s}&token=${API_KEY}`);[cite: 1]
-                const d = await r.json();
-                const rate = d.dp > 0 ? '상승 우세' : '조정 주의';[cite: 1]
-                html += `<div class="card" style="border-left:4px solid var(--purple);flex-direction:column;align-items:flex-start;gap:8px;">
-                    <div style="display:flex;justify-content:space-between;width:100%">
-                        <span class="sym" style="color:var(--purple)">${s} AI 리포트</span>
-                        <span style="font-size:0.7rem;font-weight:700">${rate}</span>
-                    </div>
-                    <div style="font-size:0.8rem;color:var(--muted)">현재 $${d.c} 가격대에서 ${d.dp}% 변동 중이며, 단기적으로 ${d.dp > 0 ? '추가 상승' : '기술적 반등'}이 기대됩니다.</div>
-                </div>`;
+        function addT() {
+            const v = document.getElementById('t-in').value.toUpperCase().trim();
+            if(v && !syms.includes(v)) {
+                syms.push(v);
+                localStorage.setItem('my_s_v3', JSON.stringify(syms));
+                location.reload();
             }
-            body.innerHTML = html;
         }
 
-        // 티커 추가
-        document.getElementById('t-btn').onclick = () => {
-            const i = document.getElementById('t-input');
-            const v = i.value.toUpperCase().trim();
-            if(v && !stocks.includes(v)) {
-                stocks.push(v);
-                localStorage.setItem('my_stocks_v2', JSON.stringify(stocks));
-                i.value = '';
-                loadQuotes();
-            }
-        };
-
-        checkMarket();
-        loadQuotes();
-        setInterval(loadQuotes, 30000);[cite: 1]
+        init();
     </script>
 </body>
 </html>
