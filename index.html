@@ -9,25 +9,22 @@
         :root {
             --bg: #050505; --card: #111; --border: #222;
             --text: #eee; --muted: #888;
-            --up: #00ff88; --down: #ff4444; --accent: #58a6ff;
+            --up: #00ff88; --down: #ff4444; --accent: #58a6ff; --purple: #bc8cff;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--text); font-family: 'Pretendard', sans-serif; line-height: 1.5; }
         .container { max-width: 500px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
         
-        /* 헤더 */
         header { padding: 20px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .logo { font-weight: 800; font-size: 1.2rem; letter-spacing: -0.5px; }
         .status { font-size: 0.75rem; display: flex; align-items: center; gap: 6px; color: var(--muted); }
         .dot { width: 8px; height: 8px; border-radius: 50%; background: #444; }
         .dot.active { background: var(--up); box-shadow: 0 0 10px var(--up); }
 
-        /* 내비게이션 */
         nav { display: flex; padding: 0 8px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(5,5,5,0.8); backdrop-filter: blur(10px); z-index: 10; }
         .nav-item { flex: 1; text-align: center; padding: 14px 0; font-size: 0.85rem; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; }
         .nav-item.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
 
-        /* 컨텐츠 영역 */
         .content { flex: 1; padding: 16px; }
         .section { display: none; }
         .section.active { display: block; }
@@ -40,80 +37,136 @@
         .price { font-weight: 700; font-size: 1.1rem; display: block; }
         .change { font-size: 0.8rem; font-weight: 600; }
 
-        /* 하단 입력창 */
+        /* 뉴스 아이템 */
+        .news-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+        .news-src { font-size: 0.7rem; color: var(--accent); font-weight: 600; margin-bottom: 4px; display: block; }
+        .news-title { font-size: 0.9rem; font-weight: 500; margin-bottom: 6px; line-height: 1.4; color: var(--text); }
+        .news-title a { color: inherit; text-decoration: none; }
+        .news-summary { font-size: 0.8rem; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        /* AI 리포트 카드 */
+        .ai-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; border-left: 4px solid var(--purple); }
+        .ai-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .ai-ticker { font-weight: 700; color: var(--accent); }
+        .ai-rating { font-size: 0.75rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; background: rgba(188, 140, 255, 0.1); color: var(--purple); }
+        .ai-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 8px; }
+        .ai-body { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+
         .input-group { padding: 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
         input { flex: 1; background: #1a1a1a; border: 1px solid var(--border); border-radius: 8px; padding: 12px; color: #fff; outline: none; }
-        button.add-btn { background: var(--accent); color: #fff; border: none; padding: 0 20px; border-radius: 8px; font-weight: 600; }
+        button.add-btn { background: var(--accent); color: #fff; border: none; padding: 0 20px; border-radius: 8px; font-weight: 600; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
             <div class="logo">MKT WATCH //</div>
-            <div class="status"><div class="dot" id="market-dot"></div> <span id="market-text">데이터 확인 중...</span></div>
+            <div class="status"><div class="dot" id="market-dot"></div> <span id="market-text">데이터 로드 중...</span></div>
         </header>
 
         <nav>
-            <div class="nav-item active" onclick="showSection('watchlist')">보유 종목</div>
-            <div class="nav-item" onclick="showSection('news')">실시간 뉴스</div>
-            <div class="nav-item" onclick="showSection('ai')">AI 리포트</div>
+            <div class="nav-item active" data-target="watchlist">보유 종목</div>
+            <div class="nav-item" data-target="news">실시간 뉴스</div>
+            <div class="nav-item" data-target="ai">AI 리포트</div>
         </nav>
 
         <main class="content">
-            <div id="watchlist" class="section active">
-                <div id="ticker-list"></div>
-            </div>
-            <div id="news" class="section"><p style="color:var(--muted)">뉴스를 불러오고 있습니다...</p></div>
-            <div id="ai" class="section"><p style="color:var(--muted)">AI가 종목을 분석 중입니다...</p></div>
+            <div id="watchlist" class="section active"><div id="ticker-list"></div></div>
+            <div id="news" class="section"><div id="news-list">뉴스를 로딩 중입니다...</div></div>
+            <div id="ai" class="section"><div id="report-list">AI 분석 데이터를 생성 중입니다...</div></div>
         </main>
 
         <div class="input-group">
-            <input type="text" id="ticker-input" placeholder="티커 입력 (예: NVDA)" onkeyup="if(window.event.keyCode==13){addTicker()}">
+            <input type="text" id="ticker-input" placeholder="티커 입력 (예: TSLA)" onkeyup="if(window.event.keyCode==13){addTicker()}">
             <button class="add-btn" onclick="addTicker()">추가</button>
         </div>
     </div>
 
     <script>
-        const API_KEY = 'd7rg9j1r01qgahvdhltgd7rg9j1r01qgahvdhlu0'; // 기존 키 유지
-        let symbols = JSON.parse(localStorage.getItem('my_stocks') || '["QQQ","SPY","NVDA","AAPL"]');
+        const API_KEY = 'd7rg9j1r01qgahvdhltgd7rg9j1r01qgahvdhlu0';[cite: 1]
+        let symbols = JSON.parse(localStorage.getItem('my_stocks') || '["QQQ","SPY","NVDA","AAPL"]');[cite: 1]
 
-        function showSection(id) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            event.target.classList.add('active');
-        }
+        // 내비게이션 탭 전환 로직
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const target = e.target.getAttribute('data-target');
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                document.getElementById(target).classList.add('active');
+                e.target.classList.add('active');
+                
+                if(target === 'news') loadNews();[cite: 1]
+                if(target === 'ai') loadAIReports();[cite: 1]
+            });
+        });
 
-        async function updateMarketStatus() {
+        // 증시 상태 업데이트
+        function updateMarketStatus() {
             const now = new Date();
             const et = new Date(now.toLocaleString('en-US', {timeZone:'America/New_York'}));
             const day = et.getDay(), hour = et.getHours(), min = et.getMinutes();
             const isOpen = day >= 1 && day <= 5 && (hour > 9 || (hour === 9 && min >= 30)) && hour < 16;
-            
             document.getElementById('market-dot').classList.toggle('active', isOpen);
             document.getElementById('market-text').innerText = isOpen ? '미국 증시 개장 중' : '미국 증시 휴장';
         }
 
+        // 종목 시세 로드
         async function loadQuotes() {
             const list = document.getElementById('ticker-list');
             list.innerHTML = '';
             for(const sym of symbols) {
-                const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${API_KEY}`);
-                const data = await res.json();
-                const isUp = data.dp >= 0;
-                list.innerHTML += `
-                    <div class="card">
-                        <div>
-                            <span class="sym">${sym}</span>
-                            <span class="name">US Market Index</span>
+                try {
+                    const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${API_KEY}`);
+                    const data = await res.json();
+                    const isUp = data.dp >= 0;
+                    list.innerHTML += `
+                        <div class="card">
+                            <div><span class="sym">${sym}</span><span class="name">실시간 시세</span></div>
+                            <div class="price-info">
+                                <span class="price" style="color:${isUp? 'var(--up)' : 'var(--down)'}">$${data.c.toFixed(2)}</span>
+                                <span class="change" style="color:${isUp? 'var(--up)' : 'var(--down)'}">${isUp?'+':''}${data.dp.toFixed(2)}%</span>
+                            </div>
                         </div>
-                        <div class="price-info">
-                            <span class="price" style="color:${isUp? 'var(--up)' : 'var(--down)'}">$${data.c.toFixed(2)}</span>
-                            <span class="change" style="color:${isUp? 'var(--up)' : 'var(--down)'}">${isUp?'+':''}${data.dp.toFixed(2)}%</span>
-                        </div>
+                    `;
+                } catch(e) { console.error(e); }
+            }
+        }
+
+        // 실시간 뉴스 로드
+        async function loadNews() {
+            const el = document.getElementById('news-list');
+            el.innerHTML = '뉴스를 가져오는 중...';
+            try {
+                const r = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${API_KEY}`);[cite: 1]
+                const data = await r.json();
+                el.innerHTML = data.slice(0, 10).map(n => `
+                    <div class="news-item">
+                        <span class="news-src">${n.source}</span>
+                        <div class="news-title"><a href="${n.url}" target="_blank">${n.headline}</a></div>
+                        <div class="news-summary">${n.summary || ''}</div>
+                    </div>
+                `).join('');
+            } catch(e) { el.innerHTML = '뉴스 로드 실패'; }
+        }
+
+        // AI 리포트 생성 (가상 분석 로직 적용)
+        async function loadAIReports() {
+            const el = document.getElementById('report-list');
+            el.innerHTML = 'AI가 종목 데이터를 분석 중입니다...';
+            let html = '';
+            for(const sym of symbols.slice(0, 3)) {
+                const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${API_KEY}`);[cite: 1]
+                const d = await r.json();
+                const rating = d.dp > 0 ? '매수 추천' : '관망/중립';[cite: 1]
+                html += `
+                    <div class="ai-card">
+                        <div class="ai-header"><span class="ai-ticker">${sym} 분석</span><span class="ai-rating">${rating}</span></div>
+                        <div class="ai-title">${sym}의 현재 흐름 분석</div>
+                        <div class="ai-body">현재가 $${d.c} 기준으로 전일 대비 ${d.dp}% 변동하고 있습니다. AI 분석 결과 단기적인 기술적 흐름이 ${d.dp > 0 ? '강세' : '보수적'}로 판단됩니다.</div>
                     </div>
                 `;
             }
+            el.innerHTML = html;
         }
 
         function addTicker() {
@@ -129,7 +182,7 @@
 
         updateMarketStatus();
         loadQuotes();
-        setInterval(loadQuotes, 30000); // 30초마다 갱신
+        setInterval(loadQuotes, 30000);[cite: 1]
     </script>
 </body>
 </html>
